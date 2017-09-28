@@ -1,59 +1,110 @@
 class FSM {
-    /**
-     * Creates new FSM instance.
-     * @param config
-     */
-    constructor(config) {}
+    
+    constructor(config) {
+      
+      
+      this.states = ['normal', 'busy', 'hungry', 'sleeping'];
+      this.activeSt=config.initial
+      this.initialSt=config.initial
+      this.history=[]
+      this.count=0
 
-    /**
-     * Returns active state.
-     * @returns {String}
-     */
-    getState() {}
+    }
+      
+    getState() {
+    return this.activeSt
+    }
+    
 
-    /**
-     * Goes to specified state.
-     * @param state
-     */
-    changeState(state) {}
+       
+    changeState(state) {
+        for (var i=0; i<this.states.length; i++)
+        {   if(this.states[i]==state){
+            this.activeSt=state
+            return this
+            }
+        }
+            throw new Error();
+    }
 
-    /**
-     * Changes state according to event transition rules.
-     * @param event
-     */
-    trigger(event) {}
+    
+    trigger(event) {
+       
 
-    /**
-     * Resets FSM state to initial.
-     */
-    reset() {}
+        if (event=='study'&&this.activeSt=='normal')
+            {this.activeSt='busy'; this.history.push(this.activeSt) }
+        else if (event=='get_hungry'&&this.activeSt=='busy'||this.activeSt=='sleeping')
+            {this.activeSt='hungry'; this.history.push(this.activeSt)}
+        else if (event=='eat'&&this.activeSt=='hungry')
+            {this.activeSt='normal'; this.history.push(this.activeSt)}
+        else if (event=='get_tired'&&this.activeSt=='busy')
+            {this.activeSt='sleeping'; this.history.push(this.activeSt)}
+        else if (event=='get_up'&&this.activeSt=='sleeping')
+            {this.activeSt='normal'; this.history.push(this.activeSt)}
+        else
+        {throw new Error('Error')}
+        this.count++;
 
-    /**
-     * Returns an array of states for which there are specified event transition rules.
-     * Returns all states if argument is undefined.
-     * @param event
-     * @returns {Array}
-     */
-    getStates(event) {}
+    }
 
-    /**
-     * Goes back to previous state.
-     * Returns false if undo is not available.
-     * @returns {Boolean}
-     */
-    undo() {}
+    
+    reset() {
 
-    /**
-     * Goes redo to state.
-     * Returns false if redo is not available.
-     * @returns {Boolean}
-     */
+        this.activeSt=this.initialSt
+
+    }
+
+    
+    getStates(event) {
+    var arr=[]
+
+    if  (!event){
+        return this.states
+    }
+
+    
+    if (event=='study'){
+        return arr.push('normal')
+    }
+    if (event=='get_tired'){
+        return arr.push('busy')
+    }
+    if (event=='get_up'){
+        return arr.push('sleeping')
+    }
+    if (event=='get_hungry'){
+        return arr.push('busy', 'sleeping')
+    }
+    if (event=='eat'){
+        return arr.push('hungry')
+    }
+        
+        else
+        {return arr} 
+
+
+
+    }
+
+    
+    undo() {
+        if(this.history[this.count-1]==undefined || this.count <=0)
+        {
+            this.activeSt = this.initialSt;
+            return false;
+        }
+
+        this.activeSt = this.history[this.count-1];
+        this.count--;
+        return true;
+    }
+
     redo() {}
 
-    /**
-     * Clears transition history
-     */
-    clearHistory() {}
+    
+    clearHistory() {
+    this.history=[]
+    }
 }
 
 module.exports = FSM;
