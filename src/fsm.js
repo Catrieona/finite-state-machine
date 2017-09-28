@@ -2,26 +2,32 @@ class FSM {
     
     constructor(config) {
       
-      
       this.states = ['normal', 'busy', 'hungry', 'sleeping'];
       this.activeSt=config.initial
       this.initialSt=config.initial
-      this.history=[]
+      this.history=[this.activeSt]
       this.count=0
+      this.changeStateUsed = false;
 
     }
       
     getState() {
-    return this.activeSt
+    	return this.activeSt;
+    	this.changeStateUsed = false;
     }
     
 
        
     changeState(state) {
-        for (var i=0; i<this.states.length; i++)
-        {   if(this.states[i]==state){
-            this.activeSt=state
-            return this
+        for (var i=0; i<this.states.length; i++){
+        	if(this.states[i]==state){
+	            this.activeSt=state;
+	            if(this.history[this.history.length-1] != state){
+	            	this.history.push(this.activeSt);
+	            }
+	            this.count++;
+	            this.changeStateUsed = true;
+	            return this;
             }
         }
             throw new Error();
@@ -31,79 +37,90 @@ class FSM {
     trigger(event) {
        
 
-        if (event=='study'&&this.activeSt=='normal')
-            {this.activeSt='busy'; this.history.push(this.activeSt) }
-        else if (event=='get_hungry'&&this.activeSt=='busy'||this.activeSt=='sleeping')
-            {this.activeSt='hungry'; this.history.push(this.activeSt)}
-        else if (event=='eat'&&this.activeSt=='hungry')
-            {this.activeSt='normal'; this.history.push(this.activeSt)}
-        else if (event=='get_tired'&&this.activeSt=='busy')
-            {this.activeSt='sleeping'; this.history.push(this.activeSt)}
-        else if (event=='get_up'&&this.activeSt=='sleeping')
-            {this.activeSt='normal'; this.history.push(this.activeSt)}
-        else
-        {throw new Error('Error')}
-        this.count++;
+        if (event == 'study' && this.activeSt == 'normal'){
+        	this.changeState('busy')
+        } else if ((event == 'get_hungry' && this.activeSt == 'busy')||
+        	(event == 'get_hungry' && this.activeSt == 'sleeping')){            
+        	this.changeState('hungry')
+        } else if (event == 'eat' && this.activeSt == 'hungry'){
+            this.changeState('normal')
+         } else if (event == 'get_tired' && this.activeSt == 'busy'){
+            this.changeState('sleeping')
+        } else if (event=='get_up'&&this.activeSt=='sleeping'){
+            this.changeState('normal')
+         } else {
+         	throw new Error('Error');
+         }
+         this.changeStateUsed = false;
+        
 
     }
 
     
     reset() {
 
-        this.activeSt=this.initialSt
-
+        this.activeSt = this.initialSt;
+        this.history = [].push(this.activeSt);
+        this.count = 0;
+        this.changeStateUsed = false;
     }
 
     
     getStates(event) {
-    var arr=[]
+	    var arr=[];
 
-    if  (!event){
-        return this.states
-    }
+	    if  (!event){
+	    	this.changeStateUsed = false;
+	        return this.states;
+	    }
 
-    
-    if (event=='study'){
-        return arr.push('normal')
-    }
-    if (event=='get_tired'){
-        return arr.push('busy')
-    }
-    if (event=='get_up'){
-        return arr.push('sleeping')
-    }
-    if (event=='get_hungry'){
-        return arr.push('busy', 'sleeping')
-    }
-    if (event=='eat'){
-        return arr.push('hungry')
-    }
-        
-        else
-        {return arr} 
+	    
+	    if (event=='study'){
+	        arr.push('normal');
+	    } else if (event=='get_tired'){
+	        arr.push('busy');
+	    } else if (event=='get_up'){
+	        arr.push('sleeping');
+	    } else if (event=='get_hungry'){
+	        arr.push('busy','sleeping');
+	    } else if (event=='eat'){
+	        arr.push('hungry');
+	    } 
 
+		this.changeStateUsed = false;
+	    return arr;
 
 
     }
 
     
     undo() {
-        if(this.history[this.count-1]==undefined || this.count <=0)
-        {
-            this.activeSt = this.initialSt;
+        if(this.history[this.count-1]==undefined || this.count <=0){
             return false;
         }
-
-        this.activeSt = this.history[this.count-1];
+        this.activeSt = this.history[this.count-1]
         this.count--;
+        this.changeStateUsed = false;
         return true;
     }
 
-    redo() {}
+    redo() {
+		if(!this.history[this.count+1] || this.changeStateUsed == true){
+            return false;
+        }
+
+        this.activeSt = this.history[this.count+1]
+        this.count++;
+        this.changeStateUsed = false;
+        return true;
+        
+
+    }
 
     
     clearHistory() {
-    this.history=[]
+    	this.history=[]
+    	this.count = 0;
     }
 }
 
